@@ -1,0 +1,354 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    cni.projectcalico.org/containerID: c2f1a27defe00b7ac838458163f508a43cd8a1e46f1af0566eb4000b36b40003
+    cni.projectcalico.org/podIP: 192.168.48.226/32
+    cni.projectcalico.org/podIPs: 192.168.48.226/32
+    kubectl.kubernetes.io/default-container: alertmanager
+  creationTimestamp: "2023-11-28T07:10:46Z"
+  generateName: alertmanager-prometheus-kube-prometheus-alertmanager-
+  labels:
+    alertmanager: prometheus-kube-prometheus-alertmanager
+    app.kubernetes.io/instance: prometheus-kube-prometheus-alertmanager
+    app.kubernetes.io/managed-by: prometheus-operator
+    app.kubernetes.io/name: alertmanager
+    app.kubernetes.io/version: 0.26.0
+    apps.kubernetes.io/pod-index: "0"
+    controller-revision-hash: alertmanager-prometheus-kube-prometheus-alertmanager-77df5b7c78
+    statefulset.kubernetes.io/pod-name: alertmanager-prometheus-kube-prometheus-alertmanager-0
+  name: alertmanager-prometheus-kube-prometheus-alertmanager-0
+  namespace: monitoring
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: StatefulSet
+    name: alertmanager-prometheus-kube-prometheus-alertmanager
+    uid: 17058018-321e-49c2-8f04-6feb341fcf0d
+  resourceVersion: "308372"
+  uid: b9d0bdae-5620-437c-9607-748190fab907
+spec:
+  containers:
+  - args:
+    - --config.file=/etc/alertmanager/config_out/alertmanager.env.yaml
+    - --storage.path=/alertmanager
+    - --data.retention=120h
+    - --cluster.listen-address=
+    - --web.listen-address=:9093
+    - --web.external-url=http://prometheus-kube-prometheus-alertmanager.monitoring:9093
+    - --web.route-prefix=/
+    - --cluster.label=monitoring/prometheus-kube-prometheus-alertmanager
+    - --cluster.peer=alertmanager-prometheus-kube-prometheus-alertmanager-0.alertmanager-operated:9094
+    - --cluster.reconnect-timeout=5m
+    - --web.config.file=/etc/alertmanager/web_config/web-config.yaml
+    env:
+    - name: POD_IP
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: status.podIP
+    image: quay.io/prometheus/alertmanager:v0.26.0
+    imagePullPolicy: IfNotPresent
+    livenessProbe:
+      failureThreshold: 10
+      httpGet:
+        path: /-/healthy
+        port: http-web
+        scheme: HTTP
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 3
+    name: alertmanager
+    ports:
+    - containerPort: 9093
+      name: http-web
+      protocol: TCP
+    - containerPort: 9094
+      name: mesh-tcp
+      protocol: TCP
+    - containerPort: 9094
+      name: mesh-udp
+      protocol: UDP
+    readinessProbe:
+      failureThreshold: 10
+      httpGet:
+        path: /-/ready
+        port: http-web
+        scheme: HTTP
+      initialDelaySeconds: 3
+      periodSeconds: 5
+      successThreshold: 1
+      timeoutSeconds: 3
+    resources:
+      requests:
+        memory: 200Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: false
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: FallbackToLogsOnError
+    volumeMounts:
+    - mountPath: /etc/alertmanager/config
+      name: config-volume
+    - mountPath: /etc/alertmanager/config_out
+      name: config-out
+      readOnly: false
+    - mountPath: /etc/alertmanager/certs
+      name: tls-assets
+      readOnly: false
+    - mountPath: /alertmanager
+      name: alertmanager-prometheus-kube-prometheus-alertmanager-db
+    - mountPath: /etc/alertmanager/web_config/web-config.yaml
+      name: web-config
+      readOnly: false
+      subPath: web-config.yaml
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-r68qw
+      readOnly: false
+  - args:
+    - --listen-address=:8080
+    - --reload-url=http://127.0.0.1:9093/-/reload
+    - --config-file=/etc/alertmanager/config/alertmanager.yaml.gz
+    - --config-envsubst-file=/etc/alertmanager/config_out/alertmanager.env.yaml
+    - --watched-dir=/etc/alertmanager/config
+    command:
+    - /bin/prometheus-config-reloader
+    env:
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.name
+    - name: SHARD
+      value: "-1"
+    image: quay.io/prometheus-operator/prometheus-config-reloader:v0.69.1
+    imagePullPolicy: IfNotPresent
+    name: config-reloader
+    ports:
+    - containerPort: 8080
+      name: reloader-web
+      protocol: TCP
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: false
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: FallbackToLogsOnError
+    volumeMounts:
+    - mountPath: /etc/alertmanager/config
+      name: config-volume
+      readOnly: false
+    - mountPath: /etc/alertmanager/config_out
+      name: config-out
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-r68qw
+      readOnly: false
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  hostname: alertmanager-prometheus-kube-prometheus-alertmanager-0
+  initContainers:
+  - args:
+    - --watch-interval=0
+    - --listen-address=:8080
+    - --config-file=/etc/alertmanager/config/alertmanager.yaml.gz
+    - --config-envsubst-file=/etc/alertmanager/config_out/alertmanager.env.yaml
+    - --watched-dir=/etc/alertmanager/config
+    command:
+    - /bin/prometheus-config-reloader
+    env:
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.name
+    - name: SHARD
+      value: "-1"
+    image: quay.io/prometheus-operator/prometheus-config-reloader:v0.69.1
+    imagePullPolicy: IfNotPresent
+    name: init-config-reloader
+    ports:
+    - containerPort: 8080
+      name: reloader-web
+      protocol: TCP
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: false
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: FallbackToLogsOnError
+    volumeMounts:
+    - mountPath: /etc/alertmanager/config
+      name: config-volume
+      readOnly: false
+    - mountPath: /etc/alertmanager/config_out
+      name: config-out
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-r68qw
+      readOnly: false
+  nodeName: ip-172-31-0-46
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext:
+    fsGroup: 2000
+    runAsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  serviceAccount: prometheus-kube-prometheus-alertmanager
+  serviceAccountName: prometheus-kube-prometheus-alertmanager
+  subdomain: alertmanager-operated
+  terminationGracePeriodSeconds: 120
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: config-volume
+    secret:
+      defaultMode: 420
+      secretName: alertmanager-prometheus-kube-prometheus-alertmanager-generated
+  - name: tls-assets
+    projected:
+      defaultMode: 420
+      sources:
+      - secret:
+          name: alertmanager-prometheus-kube-prometheus-alertmanager-tls-assets-0
+  - emptyDir:
+      medium: Memory
+    name: config-out
+  - name: web-config
+    secret:
+      defaultMode: 420
+      secretName: alertmanager-prometheus-kube-prometheus-alertmanager-web-config
+  - emptyDir: {}
+    name: alertmanager-prometheus-kube-prometheus-alertmanager-db
+  - name: kube-api-access-r68qw
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2023-11-28T07:10:48Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2023-11-29T07:00:31Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2023-11-29T07:00:31Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2023-11-28T07:10:46Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - containerID: containerd://4f2361310c1a4d53666eea9ac170be7ae12de88098b40f082627a138f188c6da
+    image: quay.io/prometheus/alertmanager:v0.26.0
+    imageID: quay.io/prometheus/alertmanager@sha256:361db356b33041437517f1cd298462055580585f26555c317df1a3caf2868552
+    lastState:
+      terminated:
+        containerID: containerd://0f60daf514922a974539c85c961619087022c8a5f17158ac038bedc7d69c3928
+        exitCode: 255
+        finishedAt: "2023-11-29T06:59:02Z"
+        message: |
+          ts=2023-11-29T06:27:24.256Z caller=main.go:245 level=info msg="Starting Alertmanager" version="(version=0.26.0, branch=HEAD, revision=d7b4f0c7322e7151d6e3b1e31cbc15361e295d8d)"
+          ts=2023-11-29T06:27:24.258Z caller=main.go:246 level=info build_context="(go=go1.20.7, platform=linux/amd64, user=root@df8d7debeef4, date=20230824-11:11:58, tags=netgo)"
+          ts=2023-11-29T06:27:24.319Z caller=coordinator.go:113 level=info component=configuration msg="Loading configuration file" file=/etc/alertmanager/config_out/alertmanager.env.yaml
+          ts=2023-11-29T06:27:24.322Z caller=coordinator.go:126 level=info component=configuration msg="Completed loading of configuration file" file=/etc/alertmanager/config_out/alertmanager.env.yaml
+          ts=2023-11-29T06:27:24.327Z caller=tls_config.go:274 level=info msg="Listening on" address=[::]:9093
+          ts=2023-11-29T06:27:24.327Z caller=tls_config.go:313 level=info msg="TLS is disabled." http2=false address=[::]:9093
+          ts=2023-11-29T06:27:29.190Z caller=coordinator.go:113 level=info component=configuration msg="Loading configuration file" file=/etc/alertmanager/config_out/alertmanager.env.yaml
+          ts=2023-11-29T06:27:29.207Z caller=coordinator.go:126 level=info component=configuration msg="Completed loading of configuration file" file=/etc/alertmanager/config_out/alertmanager.env.yaml
+        reason: Unknown
+        startedAt: "2023-11-29T06:27:23Z"
+    name: alertmanager
+    ready: true
+    restartCount: 4
+    started: true
+    state:
+      running:
+        startedAt: "2023-11-29T07:00:24Z"
+  - containerID: containerd://5edee30c84b85d8c9a321b1cb7de3b2a3b4129ca814072f7fcde5d642ac9c367
+    image: quay.io/prometheus-operator/prometheus-config-reloader:v0.69.1
+    imageID: quay.io/prometheus-operator/prometheus-config-reloader@sha256:7bbe804260f37cddce47eb90809e799434e6aaed03116ce8e041b73733a022b1
+    lastState:
+      terminated:
+        containerID: containerd://414f22e1c40b3c6ebd24f24331d2de26c5afec70ad83288e5935b67a54f90931
+        exitCode: 255
+        finishedAt: "2023-11-29T06:59:02Z"
+        message: |
+          level=info ts=2023-11-29T06:27:24.133279304Z caller=main.go:127 msg="Starting prometheus-config-reloader" version="(version=0.69.1, branch=refs/tags/v0.69.1, revision=941b9e98d4ae5faa952af250e23c31c56cc1190c)"
+          level=info ts=2023-11-29T06:27:24.136334244Z caller=main.go:128 build_context="(go=go1.21.4, platform=linux/amd64, user=Action-Run-ID-6812497076, date=20231109-15:19:57, tags=unknown)"
+          level=info ts=2023-11-29T06:27:24.150935526Z caller=main.go:176 msg="Starting web server for metrics" listen=:8080
+          level=info ts=2023-11-29T06:27:24.153604141Z caller=tls_config.go:274 msg="Listening on" address=[::]:8080
+          level=info ts=2023-11-29T06:27:24.15390841Z caller=tls_config.go:277 msg="TLS is disabled." http2=false address=[::]:8080
+          level=error ts=2023-11-29T06:27:24.154728288Z caller=runutil.go:100 msg="function failed. Retrying in next tick" err="trigger reload: reload request failed: Post \"http://127.0.0.1:9093/-/reload\": dial tcp 127.0.0.1:9093: connect: connection refused"
+          level=info ts=2023-11-29T06:27:29.243295785Z caller=reloader.go:376 msg="Reload triggered" cfg_in=/etc/alertmanager/config/alertmanager.yaml.gz cfg_out=/etc/alertmanager/config_out/alertmanager.env.yaml watched_dirs=/etc/alertmanager/config
+          level=info ts=2023-11-29T06:27:29.261142564Z caller=reloader.go:237 msg="started watching config file and directories for changes" cfg=/etc/alertmanager/config/alertmanager.yaml.gz out=/etc/alertmanager/config_out/alertmanager.env.yaml dirs=/etc/alertmanager/config
+        reason: Unknown
+        startedAt: "2023-11-29T06:27:24Z"
+    name: config-reloader
+    ready: true
+    restartCount: 4
+    started: true
+    state:
+      running:
+        startedAt: "2023-11-29T07:00:24Z"
+  hostIP: 172.31.0.46
+  initContainerStatuses:
+  - containerID: containerd://25f60106e74af2220d797a1a522c90d4ad280890e438723cb56a05dbab9662bb
+    image: quay.io/prometheus-operator/prometheus-config-reloader:v0.69.1
+    imageID: quay.io/prometheus-operator/prometheus-config-reloader@sha256:7bbe804260f37cddce47eb90809e799434e6aaed03116ce8e041b73733a022b1
+    lastState: {}
+    name: init-config-reloader
+    ready: true
+    restartCount: 4
+    started: false
+    state:
+      terminated:
+        containerID: containerd://25f60106e74af2220d797a1a522c90d4ad280890e438723cb56a05dbab9662bb
+        exitCode: 0
+        finishedAt: "2023-11-29T07:00:23Z"
+        reason: Completed
+        startedAt: "2023-11-29T07:00:23Z"
+  phase: Running
+  podIP: 192.168.48.226
+  podIPs:
+  - ip: 192.168.48.226
+  qosClass: Burstable
+  startTime: "2023-11-28T07:10:46Z"
